@@ -30,12 +30,23 @@ jobs:
           format: spdx-json
           output-file: "sbom.spdx.json"
 
-      - name: Scan SBOM (Grype)
+      - name: Build local image for scanning
+        run: docker build -t dev-check:latest .
+
+      - name: Scan Image (Grype)
         uses: anchore/scan-action@v3
         with:
-          sbom: "./sbom.spdx.json"
+          image: "dev-check:latest"
           fail-build: true
           severity-cutoff: high
+
+
+      # - name: Scan SBOM (Grype)
+      #   uses: anchore/scan-action@v3
+      #   with:
+      #     sbom: "./sbom.spdx.json"
+      #     fail-build: true
+      #     severity-cutoff: high
 
   build-and-sign:
     needs: security-scans
