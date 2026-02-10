@@ -1,0 +1,54 @@
+name: Zero-Trust Security Pipeline
+on: [push, pull_request]
+
+jobs:
+  security-scans:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Stage 1: Secret Scanning
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Stage 2: SAST (Static Analysis)
+      - name: Semgrep SAST
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep semgrep \
+          --config auto --error
+
+      # Stage 3: Dependency & SBOM Scan
+      - name: Generate SBOM (Syft)
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Scan SBOM (Grype)
+        uses: anchore/scan-action@v3
+        with:
+          sbom: "sbom.spdx.json"
+          fail-build: true
+          severity-cutoff: high
+
+  build-and-sign:
+    needs: security-scans
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Docker Image
+        run: docker build -t my-secure-app:${{ github.sha }} .
+
+      # Stage 4: Artifact Signing (Zero-Trust Identity)
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.3.0
+
+      # - name: Sign Image (Keyless)
+      #   run: |
+      #     # needs login to a registry first
+      #     echo "Signing image with OIDC identity..."
+      #     # cosign sign --yes my-secure-app:${{ github.sha }}
