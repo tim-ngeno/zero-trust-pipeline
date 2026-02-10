@@ -20,7 +20,6 @@ The pipeline implements five layers of defense-in-depth:
 
 | Layer | Tool | Purpose |
 | --- | --- | --- |
-| **OS / Shell** | Parrot OS / Fish | Security-focused development environment |
 | **Pipeline** | GitHub Actions | Automation and Orchestration |
 | **Secrets** | Gitleaks | Secret detection and prevention |
 | **SAST** | Semgrep | Code logic & vulnerability scanning |
