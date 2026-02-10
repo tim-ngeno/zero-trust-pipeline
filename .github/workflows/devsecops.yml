@@ -26,13 +26,14 @@ jobs:
       - name: Generate SBOM (Syft)
         uses: anchore/sbom-action@v0
         with:
+          path: .
           format: spdx-json
-          output-file: sbom.spdx.json
+          output-file: "sbom.spdx.json"
 
       - name: Scan SBOM (Grype)
         uses: anchore/scan-action@v3
         with:
-          sbom: "sbom.spdx.json"
+          sbom: "./sbom.spdx.json"
           fail-build: true
           severity-cutoff: high
 
